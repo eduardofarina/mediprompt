@@ -42,7 +42,7 @@ MediReason/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/medireason.git
+git clone https://github.com/eduardofarina/medireason.git
 cd medireason
 
 # Install dependencies

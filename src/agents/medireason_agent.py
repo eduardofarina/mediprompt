@@ -1,5 +1,5 @@
-from agno import Agent, Tool
-from agno.tools import BaseTool
+from agno.agent import Agent
+from agno.tools import tool
 import json
 import os
 from typing import Dict, List, Optional, Any
@@ -16,25 +16,14 @@ class MediReasonAgent(Agent):
     def __init__(self):
         super().__init__()
         self.reasoning_library = self._load_reasoning_library()
-        self.register_tools([
-            self.literature_search_tool(),
-            self.guideline_check_tool(),
-            self.pattern_search_tool(),
-            self.pattern_update_tool()
-        ])
-        
+    
     def _load_reasoning_library(self) -> Dict[str, Any]:
         """Load the clinical reasoning pattern library."""
         patterns = {}
-        pattern_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "patterns")
-        
-        # Create the patterns directory if it doesn't exist
-        os.makedirs(pattern_dir, exist_ok=True)
-        
         # Load patterns from storage
-        pattern_files = [f for f in os.listdir(pattern_dir) if f.endswith(".json")]
+        pattern_files = [f for f in os.listdir("src/patterns") if f.endswith(".json")]
         for file in pattern_files:
-            with open(os.path.join(pattern_dir, file), "r") as f:
+            with open(f"src/patterns/{file}", "r") as f:
                 pattern = json.load(f)
                 patterns[pattern["id"]] = pattern
         return patterns
@@ -42,16 +31,14 @@ class MediReasonAgent(Agent):
     def update_reasoning_library(self, pattern_id: str, updated_pattern: Dict[str, Any]):
         """Update a reasoning pattern in the library."""
         self.reasoning_library[pattern_id] = updated_pattern
-        pattern_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "patterns")
-        with open(os.path.join(pattern_dir, f"{pattern_id}.json"), "w") as f:
+        with open(f"src/patterns/{pattern_id}.json", "w") as f:
             json.dump(updated_pattern, f, indent=2)
     
     def add_reasoning_pattern(self, pattern: Dict[str, Any]):
         """Add a new reasoning pattern to the library."""
         pattern_id = pattern["id"]
         self.reasoning_library[pattern_id] = pattern
-        pattern_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "patterns")
-        with open(os.path.join(pattern_dir, f"{pattern_id}.json"), "w") as f:
+        with open(f"src/patterns/{pattern_id}.json", "w") as f:
             json.dump(pattern, f, indent=2)
     
     def search_applicable_patterns(self, case_data: Dict[str, Any]) -> List[str]:
@@ -63,7 +50,7 @@ class MediReasonAgent(Agent):
             case_text = " ".join([str(v) for v in case_data.values()]).lower()
             
             matches = sum(1 for keyword in trigger_keywords if keyword in case_text)
-            if matches / max(len(trigger_keywords), 1) > 0.5:  # If more than half the keywords match
+            if matches / len(trigger_keywords) > 0.5:  # If more than half the keywords match
                 applicable_patterns.append(pattern_id)
                 
         return applicable_patterns
@@ -118,7 +105,7 @@ class MediReasonAgent(Agent):
         
         # Apply each step in the pattern
         for step in pattern["strategy"]:
-            step_result = self._execute_reasoning_step(step, case_data, pattern)
+            step_result = self._execute_reasoning_step(step, case_data)
             result["reasoning_steps"].append(step_result)
             
         # Generate conclusion
@@ -223,21 +210,21 @@ class MediReasonAgent(Agent):
             
         return differential
     
-    def _execute_reasoning_step(self, step: str, case_data: Dict[str, Any], pattern: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_reasoning_step(self, step: str, case_data: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a single reasoning step."""
         # In a real implementation, this would use LLM to reason about the step
         # For now, just return a placeholder
         return {
             "step": step,
             "observation": f"Observed relevant data for: {step}",
-            "reasoning": f"Reasoning about: {step} based on patient data and medical knowledge",
+            "reasoning": f"Reasoning about: {step}",
             "conclusion": f"Step conclusion for: {step}"
         }
     
     def _generate_conclusion(self, reasoning_steps: List[Dict[str, Any]], pattern: Dict[str, Any]) -> str:
         """Generate an overall conclusion from reasoning steps."""
         # In a real implementation, this would use LLM to synthesize conclusions
-        return f"Based on the application of pattern {pattern['id']}, the most likely diagnosis is X. Recommended next steps include Y and Z."
+        return f"Conclusion based on pattern {pattern['id']}"
     
     def _calculate_confidence(self, reasoning_steps: List[Dict[str, Any]]) -> float:
         """Calculate confidence in the conclusion."""
@@ -298,42 +285,21 @@ class MediReasonAgent(Agent):
         return None
     
     # Define tools this agent can use
-    def literature_search_tool(self) -> BaseTool:
-        """Tool for searching medical literature."""
-        return Tool(
-            name="literature_search",
-            description="Search medical literature for information relevant to the case",
-            function=self._literature_search_implementation
-        )
-        
-    def _literature_search_implementation(self, query: str) -> str:
-        """Implementation for literature search tool."""
-        # In a real implementation, this would call PubMed API or similar
+    @tool(show_result=True)
+    def literature_search_tool(self, query: str) -> str:
+        """Search medical literature for information relevant to the case"""
+        # Implementation for literature search tool
         return f"Found 5 relevant articles for {query}"
     
-    def guideline_check_tool(self) -> BaseTool:
-        """Tool for checking clinical guidelines."""
-        return Tool(
-            name="guideline_check",
-            description="Check clinical guidelines for the management of a condition",
-            function=self._guideline_check_implementation
-        )
-        
-    def _guideline_check_implementation(self, condition: str) -> str:
-        """Implementation for guideline check tool."""
-        # In a real implementation, this would query a guidelines database
+    @tool(show_result=True)
+    def guideline_check_tool(self, condition: str) -> str:
+        """Check clinical guidelines for the management of a condition"""
+        # Implementation for guideline check tool
         return f"Latest guidelines for {condition} recommend..."
     
-    def pattern_search_tool(self) -> BaseTool:
-        """Tool for searching the reasoning pattern library."""
-        return Tool(
-            name="pattern_search",
-            description="Search for a clinical reasoning pattern in the library",
-            function=self._pattern_search_implementation
-        )
-        
-    def _pattern_search_implementation(self, query: str) -> str:
-        """Implementation for pattern search tool."""
+    @tool(show_result=True)
+    def pattern_search_tool(self, query: str) -> str:
+        """Search for a clinical reasoning pattern in the library"""
         # Basic search implementation
         matching_patterns = []
         for pattern_id, pattern in self.reasoning_library.items():
@@ -344,16 +310,9 @@ class MediReasonAgent(Agent):
             return f"Found patterns: {', '.join(matching_patterns)}"
         return "No matching patterns found"
     
-    def pattern_update_tool(self) -> BaseTool:
-        """Tool for updating reasoning patterns."""
-        return Tool(
-            name="pattern_update",
-            description="Update or add a clinical reasoning pattern",
-            function=self._pattern_update_implementation
-        )
-        
-    def _pattern_update_implementation(self, pattern_data: str) -> str:
-        """Implementation for pattern update tool."""
+    @tool(show_result=True)
+    def pattern_update_tool(self, pattern_data: str) -> str:
+        """Update or add a clinical reasoning pattern"""
         try:
             pattern = json.loads(pattern_data)
             pattern_id = pattern.get("id")
@@ -371,4 +330,35 @@ class MediReasonAgent(Agent):
         except json.JSONDecodeError:
             return "Error: Invalid JSON data"
         except Exception as e:
-            return f"Error updating pattern: {str(e)}" 
+            return f"Error updating pattern: {str(e)}"
+
+# Add a main function to make the script runnable
+def main():
+    # Create the agent
+    agent = MediReasonAgent()
+    
+    # Load a sample case
+    sample_case_path = "src/cases/sample_chest_pain_case.json"
+    if os.path.exists(sample_case_path):
+        with open(sample_case_path, "r") as f:
+            case_data = json.load(f)
+        
+        print(f"Loaded sample case: {case_data.get('id', 'Unknown')}")
+        
+        # Find applicable patterns
+        applicable_patterns = agent.search_applicable_patterns(case_data)
+        print(f"Found {len(applicable_patterns)} applicable patterns: {applicable_patterns}")
+        
+        # Apply the first applicable pattern if any
+        if applicable_patterns:
+            result = agent.apply_pattern(applicable_patterns[0], case_data)
+            print("\nApplied pattern result:")
+            print(json.dumps(result, indent=2))
+        else:
+            print("No applicable patterns found for this case.")
+    else:
+        print(f"Sample case file not found: {sample_case_path}")
+        print("Please create a sample case file or specify a different path.")
+
+if __name__ == "__main__":
+    main() 
