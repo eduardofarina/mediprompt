@@ -484,6 +484,24 @@ def display_system_prompt_learning_log():
     
     st.pyplot(fig)
 
+def classify_user_intent(user_input: str) -> str:
+    """Classify user input as diagnosis, treatment, followup, or question."""
+    text = user_input.lower()
+    if any(word in text for word in ["treat", "treatment", "manage", "medication", "therapy", "drug", "dose", "antibiotic", "antiviral", "how do you treat", "what is the treatment"]):
+        return "treatment"
+    if any(word in text for word in ["follow-up", "prognosis", "outcome", "complication", "monitor", "recovery", "risk", "chance", "long-term"]):
+        return "followup"
+    if any(word in text for word in ["diagnosis", "differential", "what could this be", "what is the diagnosis", "what are the causes"]):
+        return "diagnosis"
+    # If the user gives a statement like "scabies was the diagnosis" or "the diagnosis was ..."
+    if "was the diagnosis" in text or "diagnosed with" in text:
+        return "treatment"  # move to management
+    # If the user asks a direct question (ends with ?)
+    if text.strip().endswith("?"):
+        return "question"
+    # Default to diagnosis if the input is a case description
+    return "diagnosis"
+
 # Streamlit UI
 def main():
     st.set_page_config(
@@ -503,6 +521,8 @@ def main():
         st.session_state.last_ask_user = None
     if "awaiting_agent" not in st.session_state:
         st.session_state.awaiting_agent = False
+    if "dialogue_mode" not in st.session_state:
+        st.session_state.dialogue_mode = "diagnosis"
 
     # Initialize session state for learning toggle and log
     if "enable_learning" not in st.session_state:
@@ -513,15 +533,14 @@ def main():
     tabs = st.tabs(["Chat Interface", "System Prompt Learning", "Settings"])
     
     with tabs[0]:
-        # Add New Case button
         if st.button("🔄 Start New Case"):
             st.session_state.case_data = {}
             st.session_state.chat_history = [{"role": "assistant", "content": "Starting a new case analysis. Please describe the case or ask a question."}]
             st.session_state.last_ask_user = None
             st.session_state.awaiting_agent = False
+            st.session_state.dialogue_mode = "diagnosis"
             st.rerun()
 
-        # Display chat history
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
@@ -529,100 +548,148 @@ def main():
         user_input = st.chat_input("Enter a medical case, answer a question, or ask...")
         
         if user_input:
-            # If we are waiting for a specific answer, update case_data
+            # Classify user intent and set dialogue mode
+            st.session_state.dialogue_mode = classify_user_intent(user_input)
             if st.session_state.last_ask_user:
                 update_case_data_from_user_input(user_input, st.session_state.last_ask_user, st.session_state.case_data)
             else:
-                # New interaction, potentially start of a new case if history is empty
-                if not st.session_state.chat_history: # Check if it's truly a new start
-                     st.session_state.case_data = {}
+                if not st.session_state.chat_history:
+                    st.session_state.case_data = {}
                 st.session_state.case_data["initial_input"] = st.session_state.case_data.get("initial_input", "") + "\n" + user_input
-            
             st.session_state.chat_history.append({"role": "user", "content": user_input})
             st.session_state.awaiting_agent = True
             st.rerun()
         
-        # Agent turn: only run after user input
         if st.session_state.awaiting_agent:
-            st.session_state.awaiting_agent = False # Reset flag
-
-            # Always pass full case_data to the agent
-            result = medireason_agent.analyze_case(st.session_state.case_data)
-            
-            # Compose concise output
-            differentials = result.get("differential_diagnosis", [])
-            recommendations = result.get("recommendations", [])
-            ask_user = result.get("ask_user", None)
-            
-            # Format output
+            st.session_state.awaiting_agent = False
+            mode = st.session_state.dialogue_mode
             output = ""
-            if differentials:
-                output += "**Differential Diagnosis:**\n"
-                for d in differentials:
-                    output += f"- {d.get('diagnosis')}: {d.get('reasoning', d.get('likelihood', ''))}\n"
-            if recommendations:
-                output += "\n**Next Steps / Recommendations:**\n"
-                for r in recommendations:
-                    output += f"- {r}\n"
-            
-            # Check if agent asks a question and if info is needed
-            needs_more_info = ask_user and not is_info_already_provided(ask_user, st.session_state.case_data)
-            
-            if needs_more_info:
-                output += f"\n**Question:** {ask_user}"
-                st.session_state.last_ask_user = ask_user
-            else:
-                # Reasoning seems complete for now, attempt system prompt learning
+            if mode == "diagnosis":
+                result = medireason_agent.analyze_case(st.session_state.case_data)
+                differentials = result.get("differential_diagnosis", [])
+                recommendations = result.get("recommendations", [])
+                ask_user = result.get("ask_user", None)
+                if differentials:
+                    output += "**Differential Diagnosis:**\n"
+                    for d in differentials:
+                        output += f"- {d.get('diagnosis')}: {d.get('reasoning', d.get('likelihood', ''))}\n"
+                if recommendations:
+                    output += "\n**Next Steps / Recommendations:**\n"
+                    for r in recommendations:
+                        output += f"- {r}\n"
+                needs_more_info = ask_user and not is_info_already_provided(ask_user, st.session_state.case_data)
+                if needs_more_info:
+                    output += f"\n**Question:** {ask_user}"
+                    st.session_state.last_ask_user = ask_user
+                else:
+                    st.session_state.last_ask_user = None
+                    # Only run system prompt learning if not in diagnosis mode
+                    if st.session_state.enable_learning:
+                        try:
+                            learning_result = learning_agent.analyze_reasoning(st.session_state.case_data, result)
+                            if "new_strategy" in learning_result and "error" not in learning_result:
+                                strategy = learning_result["new_strategy"]
+                                add_status = learning_agent.add_strategy_to_prompt("med-reasoning-base", strategy)
+                                log_entry = {
+                                    "timestamp": datetime.datetime.now().isoformat(),
+                                    "case": json.dumps(st.session_state.case_data.get("initial_input", "N/A"))[:100] + "...",
+                                    "strategy": strategy.get("description", "N/A"),
+                                    "prompt_id": "med-reasoning-base",
+                                    "status": add_status.get("status", "unknown")
+                                }
+                                st.session_state.system_prompt_learning_log.append(log_entry)
+                                output += f"\n\n*(Learned new strategy: {strategy.get('description', 'N/A')})*"
+                        except Exception as e:
+                            st.warning(f"System prompt learning failed: {str(e)}")
+            elif mode == "treatment":
+                # Give management advice for the most likely/confirmed diagnosis
+                diagnosis = st.session_state.case_data.get("diagnosis")
+                if not diagnosis:
+                    # Try to infer from last differential
+                    diagnosis = None
+                    if st.session_state.chat_history:
+                        for msg in reversed(st.session_state.chat_history):
+                            if "Differential Diagnosis" in msg["content"]:
+                                lines = msg["content"].split("\n")
+                                for line in lines:
+                                    if line.startswith("- "):
+                                        diagnosis = line[2:].split(":")[0]
+                                        break
+                            if diagnosis:
+                                break
+                if diagnosis:
+                    output += f"**Treatment/Management for {diagnosis}:**\n"
+                else:
+                    output += "**Treatment/Management:**\n"
+                # Use LLM to generate management advice
+                prompt = f"You are a clinical reasoning assistant. Provide concise, evidence-based management and treatment advice for the following diagnosis and case context:\nDiagnosis: {diagnosis}\nCase: {json.dumps(st.session_state.case_data)}"
+                messages = [
+                    {"role": "system", "content": "You are a clinical reasoning assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+                advice = get_llm_response(messages)
+                output += advice
                 st.session_state.last_ask_user = None
-                if st.session_state.enable_learning:
-                    try:
-                        learning_result = learning_agent.analyze_reasoning(st.session_state.case_data, result)
-                        if "new_strategy" in learning_result and "error" not in learning_result:
-                            strategy = learning_result["new_strategy"]
-                            add_status = learning_agent.add_strategy_to_prompt("med-reasoning-base", strategy)
-                            
-                            # Log the learning event
-                            log_entry = {
-                                "timestamp": datetime.datetime.now().isoformat(),
-                                "case": json.dumps(st.session_state.case_data.get("initial_input", "N/A"))[:100] + "...",
-                                "strategy": strategy.get("description", "N/A"),
-                                "prompt_id": "med-reasoning-base",
-                                "status": add_status.get("status", "unknown")
-                            }
-                            st.session_state.system_prompt_learning_log.append(log_entry)
-                            
-                            # Optionally add a note about learning to the chat
-                            output += f"\n\n*(Learned new strategy: {strategy.get('description', 'N/A')})*"
-                    except Exception as e:
-                        st.warning(f"System prompt learning failed: {str(e)}")
-
+            elif mode == "followup":
+                # Give follow-up/prognosis advice
+                diagnosis = st.session_state.case_data.get("diagnosis")
+                if not diagnosis:
+                    diagnosis = None
+                    if st.session_state.chat_history:
+                        for msg in reversed(st.session_state.chat_history):
+                            if "Differential Diagnosis" in msg["content"]:
+                                lines = msg["content"].split("\n")
+                                for line in lines:
+                                    if line.startswith("- "):
+                                        diagnosis = line[2:].split(":")[0]
+                                        break
+                            if diagnosis:
+                                break
+                output += f"**Follow-up/Prognosis for {diagnosis or 'this case'}:**\n"
+                prompt = f"You are a clinical reasoning assistant. Provide concise, evidence-based follow-up, prognosis, and monitoring advice for the following diagnosis and case context:\nDiagnosis: {diagnosis}\nCase: {json.dumps(st.session_state.case_data)}"
+                messages = [
+                    {"role": "system", "content": "You are a clinical reasoning assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+                advice = get_llm_response(messages)
+                output += advice
+                st.session_state.last_ask_user = None
+            else:  # mode == "question"
+                # Just answer the question
+                prompt = f"You are a clinical reasoning assistant. Answer the following question in the context of this case:\nCase: {json.dumps(st.session_state.case_data)}\nQuestion: {st.session_state.chat_history[-1]['content']}"
+                messages = [
+                    {"role": "system", "content": "You are a clinical reasoning assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+                answer = get_llm_response(messages)
+                output += answer
+                st.session_state.last_ask_user = None
             st.session_state.chat_history.append({"role": "assistant", "content": output})
             st.rerun()
     
     # Tab 2: System Prompt Learning
     with tabs[1]:
         st.header("System Prompt Learning")
-        
         st.markdown("""
         This tab shows how the system is learning from clinical reasoning cases to improve its reasoning strategies.
         Each time the system analyzes a case, it extracts new reasoning strategies that can be applied to future cases.
         """)
-        
-        # Show current system prompts
         with st.expander("Current System Prompts"):
             st.subheader("Medical Reasoning Prompt")
-            # Reload prompts in case they were updated
-            prompt_library.load_prompts() 
+            prompt_library.load_prompts()  # Always reload
             med_reasoning_prompt = prompt_library.get_formatted_prompt("med-reasoning-base")
             st.text_area("Medical Reasoning Prompt", med_reasoning_prompt, height=300, key="med_reasoning_display")
-            
             st.subheader("Literature Search Prompt")
             lit_search_prompt = prompt_library.get_formatted_prompt("literature-search-base")
             st.text_area("Literature Search Prompt", lit_search_prompt, height=300, key="lit_search_display")
-        
-        # Show learning log
         st.subheader("Learning History")
-        display_system_prompt_learning_log()
+        # Show most recent first
+        if st.session_state.system_prompt_learning_log:
+            df = pd.DataFrame(st.session_state.system_prompt_learning_log)
+            df = df.sort_values("timestamp", ascending=False)
+            st.dataframe(df[["timestamp", "case", "strategy", "prompt_id", "status"]])
+        else:
+            st.info("No system prompt learning history available yet.")
     
     # Tab 3: Settings
     with tabs[2]:
