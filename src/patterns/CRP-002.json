@@ -1,0 +1,43 @@
+{
+  "id": "CRP-002",
+  "trigger": "Chest pain atypical presentation non-cardiac cardiac differential diagnosis",
+  "strategy": [
+    "Classify chest pain characteristics (quality, location, radiation, duration, triggers, relieving factors)",
+    "Identify red flags for life-threatening causes (cardiac, pulmonary, aortic)",
+    "Assess cardiovascular risk factors (age, diabetes, hypertension, smoking, family history)",
+    "Evaluate for associated symptoms (dyspnea, syncope, diaphoresis, palpitations)",
+    "Compare presentation to typical patterns of common diagnoses (ACS vs GERD vs musculoskeletal)",
+    "Use validated clinical prediction rules (HEART, TIMI, Wells' for PE) to guide diagnostic testing"
+  ],
+  "evidenceBase": [
+    {
+      "source": "American Heart Association",
+      "citation": "Amsterdam EA, et al. 2014 AHA/ACC guideline for the management of patients with non-ST-elevation acute coronary syndromes. Circulation. 2014",
+      "relevance": "Risk stratification and diagnostic approach for suspected ACS"
+    },
+    {
+      "source": "Meta-analysis",
+      "citation": "Fanaroff AC, et al. Does This Patient With Chest Pain Have Acute Coronary Syndrome? JAMA. 2015",
+      "relevance": "Clinical features predictive of ACS"
+    },
+    {
+      "source": "Prospective Study",
+      "citation": "Mahler SA, et al. The HEART Pathway: A Risk Stratification Tool for Emergency Department Patients With Chest Pain. JAMA Cardiol. 2022",
+      "relevance": "Validation of the HEART score for early discharge"
+    }
+  ],
+  "cautions": [
+    "Women, elderly, and diabetic patients may present with atypical symptoms of ACS",
+    "Normal ECG and initial troponin do not exclude ACS",
+    "Gastroesophageal and musculoskeletal causes often diagnoses of exclusion",
+    "Panic disorder and anxiety can mimic symptoms of ACS but remain diagnoses of exclusion",
+    "Cognitive biases (availability, anchoring) contribute to missed diagnoses"
+  ],
+  "example": {
+    "presentation": "45-year-old female with burning central chest pain for 2 days, worse after meals and when lying down. No dyspnea, diaphoresis or radiation. History of GERD and anxiety. Normal vital signs, ECG shows normal sinus rhythm.",
+    "application": "Pattern application identifies low-risk features using HEART score (2 points). History suggests GERD exacerbation rather than ACS. Testing includes single troponin (negative) and trial of antacid therapy with significant symptom improvement.",
+    "outcome": "Patient diagnosed with GERD exacerbation, discharged with PPI therapy and outpatient follow-up. No cardiac events at 30-day follow-up."
+  },
+  "dateAdded": "2025-05-12T13:00:00.000Z",
+  "lastUpdated": "2025-05-12T13:00:00.000Z"
+} 

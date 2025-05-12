@@ -1,0 +1,43 @@
+{
+  "id": "CRP-001",
+  "trigger": "Fever cough shortness of breath respiratory symptoms acute onset",
+  "strategy": [
+    "Assess vital signs for evidence of respiratory distress (tachypnea, hypoxemia)",
+    "Identify risk factors for common etiologies (smoking, COPD, recent viral exposures, immunocompromise)",
+    "Evaluate duration and progression of symptoms (acute vs. chronic, stable vs. worsening)",
+    "Examine for localizing signs in lung fields (decreased breath sounds, rales, wheezing)",
+    "Consider cardiac contribution (heart failure exacerbation)",
+    "Stratify by severity using validated tools (CURB-65, PSI for pneumonia; DECAF for COPD)"
+  ],
+  "evidenceBase": [
+    {
+      "source": "American Thoracic Society",
+      "citation": "Metlay JP, et al. Diagnosis and Treatment of Adults with Community-acquired Pneumonia. Am J Respir Crit Care Med. 2019",
+      "relevance": "Guidelines for diagnosis and management of community-acquired pneumonia"
+    },
+    {
+      "source": "GOLD Guidelines",
+      "citation": "Global Strategy for Prevention, Diagnosis and Management of COPD, 2023 Report",
+      "relevance": "Classification and management of COPD exacerbations"
+    },
+    {
+      "source": "Systematic Review",
+      "citation": "Woodhead M, et al. Pneumonia: diagnosis and management of community- and hospital-acquired pneumonia in adults. NICE Clinical Guideline 191, 2019",
+      "relevance": "Diagnostic approach to community-acquired pneumonia"
+    }
+  ],
+  "cautions": [
+    "Elderly patients and immunocompromised individuals may present atypically without fever",
+    "COVID-19 may present with minimal respiratory symptoms but significant hypoxemia ('silent hypoxemia')",
+    "Heart failure can mimic or coexist with respiratory infections",
+    "Consider pulmonary embolism in patients with risk factors and unexplained tachycardia/hypoxemia",
+    "Biomarkers (CRP, procalcitonin) have limited specificity for bacterial infection"
+  ],
+  "example": {
+    "presentation": "65-year-old male with history of COPD presents with 3 days of fever, productive cough, and worsening shortness of breath. Vital signs show temp 38.5°C, HR 110, RR 24, BP 145/85, O2 sat 88% on room air.",
+    "application": "Severity assessment with CURB-65 score of 2 and evidence of COPD exacerbation with likely bacterial pneumonia trigger. Pattern suggests need for blood cultures, sputum analysis, chest imaging, and consideration of combined antibiotics covering both typical and atypical organisms. Hospital admission indicated based on hypoxemia and CURB-65 score.",
+    "outcome": "Patient diagnosed with community-acquired pneumonia and COPD exacerbation, treated with ceftriaxone and azithromycin, supplemental oxygen, and bronchodilators. Improved within 48 hours of admission."
+  },
+  "dateAdded": "2025-05-12T13:00:00.000Z",
+  "lastUpdated": "2025-05-12T13:00:00.000Z"
+} 

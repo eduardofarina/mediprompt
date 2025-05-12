@@ -1,0 +1,92 @@
+{
+  "primary_pattern_applied": "CRP-002",
+  "reasoning_steps": [
+    {
+      "step": "Classify chest pain characteristics",
+      "observation": "Patient reports burning central chest pain, worse after meals and when lying down, episodes lasting 15-30 minutes, present for 1 week, no radiation",
+      "reasoning": "The characteristics of burning pain that worsens after meals and in recumbent position are classic for GERD. The absence of radiation, relatively short duration of episodes, and positional/temporal relationship to meals are less consistent with cardiac chest pain",
+      "conclusion": "Chest pain characteristics are most consistent with gastroesophageal reflux disease"
+    },
+    {
+      "step": "Identify red flags for life-threatening causes",
+      "observation": "No dyspnea, no diaphoresis, no syncope, no palpitations. Normal vital signs with no tachycardia, hypotension, or hypoxemia. Normal ECG without ST-T wave changes. Troponin I is normal (0.01)",
+      "reasoning": "Absence of associated symptoms like dyspnea, diaphoresis, and normal vital signs decrease likelihood of ACS. Normal ECG and troponin further reduce probability of acute cardiac cause",
+      "conclusion": "No red flags identified for immediately life-threatening conditions"
+    },
+    {
+      "step": "Assess cardiovascular risk factors",
+      "observation": "Patient is 48-year-old female with family history of MI in mother (age 72) and HTN in father. No personal history of diabetes, hypertension, hyperlipidemia; never smoker, occasional alcohol use",
+      "reasoning": "Family history presents mild risk, but patient lacks major modifiable CV risk factors. Age and sex (pre-menopausal female) confer relatively lower baseline risk",
+      "conclusion": "Patient has low-to-moderate cardiovascular risk profile"
+    },
+    {
+      "step": "Evaluate for associated symptoms",
+      "observation": "Patient reports frequent heartburn worse when lying down, occasional regurgitation of sour taste. No respiratory symptoms, no syncope, no palpitations. Reports increased work stress in past month",
+      "reasoning": "Associated symptoms of heartburn and acid regurgitation strongly support GERD. Recent stress increase may exacerbate GERD symptoms. Absence of syncope, palpitations, or exertional symptoms decreases likelihood of cardiac cause",
+      "conclusion": "Associated symptoms strongly favor GERD as etiology"
+    },
+    {
+      "step": "Compare presentation to typical patterns of common diagnoses",
+      "observation": "Patient has history of GERD with acknowledged poor medication compliance. Symptoms include classic GERD presentation with burning pain after meals and when lying down. Normal cardiac biomarkers and ECG",
+      "reasoning": "Pattern clearly matches typical GERD presentation. Poor compliance with PPI therapy explains current symptoms despite previous diagnosis. Normal cardiac evaluation makes ACS very unlikely",
+      "conclusion": "Presentation is highly consistent with GERD exacerbation and not consistent with typical ACS pattern"
+    },
+    {
+      "step": "Use validated clinical prediction rules",
+      "observation": "HEART score components: History (moderately suspicious=1), ECG (normal=0), Age (48=1), Risk factors (limited=0), Troponin (normal=0), yielding total score of 2",
+      "reasoning": "HEART score of 2 indicates very low risk for major adverse cardiac event (MACE) in next 6 weeks (<2% risk). Current guidelines support discharge without further cardiac testing with this score",
+      "conclusion": "Clinical prediction rules support a non-cardiac etiology and low risk for adverse events"
+    }
+  ],
+  "differential_diagnosis": [
+    {
+      "diagnosis": "Gastroesophageal reflux disease (GERD) exacerbation",
+      "likelihood": "High",
+      "supporting_evidence": [
+        "Known history of GERD with poor medication compliance",
+        "Burning chest pain, worse after meals and when lying down",
+        "Reports of heartburn and acid regurgitation",
+        "Absence of cardiac risk factors or concerning features",
+        "Normal cardiac enzymes and ECG"
+      ]
+    },
+    {
+      "diagnosis": "Non-cardiac chest pain related to anxiety",
+      "likelihood": "Medium",
+      "supporting_evidence": [
+        "History of anxiety disorder",
+        "Recent increase in work stress",
+        "Normal cardiac assessment",
+        "Episodic nature of symptoms"
+      ]
+    },
+    {
+      "diagnosis": "Acute coronary syndrome",
+      "likelihood": "Low",
+      "supporting_evidence": [
+        "Chest pain (though atypical for cardiac)",
+        "Family history of MI (though in elderly mother)",
+        "Low HEART score of 2 indicating <2% risk of major adverse cardiac event"
+      ]
+    },
+    {
+      "diagnosis": "Musculoskeletal chest pain",
+      "likelihood": "Low",
+      "supporting_evidence": [
+        "Chest pain (though characteristics not typical for musculoskeletal)",
+        "No reproducible tenderness on exam",
+        "No history of recent trauma or excessive physical activity"
+      ]
+    }
+  ],
+  "recommendations": [
+    "Resume PPI therapy with omeprazole 40mg daily for 4-8 weeks (double dose due to symptom severity)",
+    "Lifestyle modifications: avoid eating 2-3 hours before lying down, elevate head of bed 6-8 inches, avoid trigger foods (spicy, fatty, citrus, caffeine, chocolate)",
+    "Consider stress management techniques given recent increased work stress",
+    "Return if symptoms worsen or if new symptoms develop (dyspnea, diaphoresis, radiating pain)",
+    "Follow-up in 2 weeks to assess response to therapy",
+    "If symptoms persist despite adherence to treatment, consider GI referral for possible endoscopy"
+  ],
+  "conclusion": "This 48-year-old female presents with symptoms highly consistent with GERD exacerbation in the setting of medication non-compliance. Her low HEART score of 2, normal ECG, normal troponin, and absence of concerning features make acute coronary syndrome very unlikely. Resumption of PPI therapy with lifestyle modifications is appropriate. The patient should be counseled about medication adherence and the importance of seeking medical attention if her symptoms change in character or if new concerning symptoms develop.",
+  "confidence": 0.90
+} 

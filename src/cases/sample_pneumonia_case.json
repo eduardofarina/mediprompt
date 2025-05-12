@@ -1,0 +1,52 @@
+{
+  "case_id": "CASE001",
+  "presenting_symptoms": "Fever, productive cough with yellow sputum, shortness of breath for 4 days",
+  "patient_demographics": {
+    "age": 68,
+    "sex": "male",
+    "weight": 82,
+    "height": 175
+  },
+  "vital_signs": "Temperature 38.7°C, HR 105, BP 138/88, RR 24, O2 sat 91% on room air",
+  "physical_exam": "Alert and oriented. Respiratory: decreased breath sounds in right lower lobe, crackles present. Cardiac: regular rhythm, no murmurs. Remainder of exam unremarkable.",
+  "past_medical_history": "COPD (diagnosed 10 years ago), hypertension, type 2 diabetes",
+  "medications": [
+    "Albuterol inhaler prn",
+    "Tiotropium 18mcg daily",
+    "Lisinopril 10mg daily",
+    "Metformin 1000mg twice daily"
+  ],
+  "allergies": "Penicillin (rash)",
+  "social_history": "Former smoker (40 pack-years, quit 5 years ago), lives alone, independent in ADLs",
+  "family_history": "Father had COPD, mother had hypertension",
+  "review_of_systems": {
+    "constitutional": "Fatigue, chills",
+    "respiratory": "Cough, sputum production, dyspnea",
+    "cardiovascular": "No chest pain, no palpitations",
+    "gastrointestinal": "Decreased appetite, no nausea/vomiting",
+    "other": "No other symptoms reported"
+  },
+  "initial_labs": {
+    "cbc": {
+      "wbc": 14.5,
+      "hgb": 13.2,
+      "plt": 210
+    },
+    "cmp": {
+      "sodium": 138,
+      "potassium": 4.2,
+      "creatinine": 1.1,
+      "bun": 18,
+      "glucose": 156
+    },
+    "abg": {
+      "ph": 7.36,
+      "pco2": 45,
+      "po2": 68,
+      "hco3": 24
+    }
+  },
+  "imaging": {
+    "chest_xray": "Right lower lobe infiltrate consistent with pneumonia. No effusion."
+  }
+} 

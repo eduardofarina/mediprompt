@@ -1,0 +1,47 @@
+{
+  "case_id": "CASE002",
+  "presenting_symptoms": "Burning chest pain in center of chest, worse after meals and when lying down. Episodes last 15-30 minutes. Present for 1 week. No radiation.",
+  "patient_demographics": {
+    "age": 48,
+    "sex": "female",
+    "weight": 75,
+    "height": 165
+  },
+  "vital_signs": "Temperature 37.0°C, HR 82, BP 128/78, RR 16, O2 sat 99% on room air",
+  "physical_exam": "Alert and oriented. Cardiovascular: regular rate and rhythm, no murmurs, rubs or gallops. Pulmonary: clear to auscultation bilaterally. Abdomen: soft, non-tender, no guarding. No reproducible chest wall tenderness.",
+  "past_medical_history": "Gastroesophageal reflux disease diagnosed 2 years ago, anxiety disorder",
+  "medications": [
+    "Omeprazole 20mg daily (admits poor compliance)",
+    "Alprazolam 0.25mg as needed for anxiety"
+  ],
+  "allergies": "No known drug allergies",
+  "social_history": "Never smoker, occasional alcohol use (1-2 drinks per week), works as teacher",
+  "family_history": "Mother had myocardial infarction at age 72, father with hypertension",
+  "review_of_systems": {
+    "constitutional": "No fever, fatigue, or weight loss",
+    "respiratory": "No cough, no shortness of breath",
+    "cardiovascular": "No palpitations, no syncope",
+    "gastrointestinal": "Frequent heartburn, worse when lying down after meals, occasional regurgitation of sour taste",
+    "other": "Reports increased work stress in the past month"
+  },
+  "initial_labs": {
+    "cbc": {
+      "wbc": 7.2,
+      "hgb": 13.8,
+      "plt": 265
+    },
+    "cardiac": {
+      "troponin_i": 0.01
+    },
+    "cmp": {
+      "sodium": 140,
+      "potassium": 4.0,
+      "creatinine": 0.8,
+      "bun": 12,
+      "glucose": 92
+    }
+  },
+  "imaging": {
+    "ecg": "Normal sinus rhythm. No ST or T wave abnormalities."
+  }
+} 

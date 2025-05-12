@@ -1,0 +1,104 @@
+{
+  "primary_pattern_applied": "CRP-002",
+  "reasoning_steps": [
+    {
+      "step": "Characterize chest pain features",
+      "observation": "Patient reports burning, substernal chest pain that worsens after meals and when lying down. Pain is not exertional and is relieved by sitting upright or taking antacids.",
+      "reasoning": "The characteristics of burning substernal pain worsening with meals and recumbency are classic for gastroesophageal reflux. The relief with positional change and antacids further supports this etiology.",
+      "conclusion": "Pain characteristics strongly suggest gastroesophageal reflux disease (GERD) as the etiology."
+    },
+    {
+      "step": "Identify high-risk 'red flag' features",
+      "observation": "No radiation to jaw/arm, no diaphoresis, no associated shortness of breath, no exertional component. Pain is not sudden or severe. ECG shows normal sinus rhythm without ST changes or T-wave inversions. No hypotension or abnormal heart sounds.",
+      "reasoning": "Absence of classic ACS features such as radiation, diaphoresis, exertional pattern, and ECG changes significantly lowers likelihood of cardiac ischemia.",
+      "conclusion": "Low probability of acute coronary syndrome based on absence of concerning features."
+    },
+    {
+      "step": "Assess cardiovascular risk factors",
+      "observation": "Patient is 45 years old with hypertension that is well-controlled on medication. No diabetes, smoking, or family history of premature CAD. BMI 27, cholesterol levels within normal range.",
+      "reasoning": "Patient has only one major CV risk factor (hypertension) which is well-controlled. Overall cardiovascular risk is low-to-moderate based on traditional risk factors.",
+      "conclusion": "Cardiovascular risk profile does not significantly increase pre-test probability of ACS."
+    },
+    {
+      "step": "Evaluate associated symptoms",
+      "observation": "Patient reports regurgitation of sour fluid into throat, frequent throat clearing, occasional hoarseness, and worsening symptoms after large meals. Recent weight gain of 5 pounds. Reports increased work stress and irregular meal timing.",
+      "reasoning": "Regurgitation, throat clearing, and hoarseness are common extraesophageal manifestations of GERD. Recent lifestyle changes (stress, weight gain, irregular meals) are known precipitants of GERD exacerbation.",
+      "conclusion": "Constellation of symptoms strongly supports GERD diagnosis."
+    },
+    {
+      "step": "Compare to typical patterns of common diagnoses",
+      "observation": "Symptoms match classic GERD presentation. Pain is not pleuritic, no cough or fever to suggest pulmonary cause. No tenderness to palpation to suggest musculoskeletal etiology. History of GERD with similar previous episodes that responded to PPI therapy.",
+      "reasoning": "Current presentation is consistent with patient's previously diagnosed GERD. Symptoms responded to appropriate GERD therapy in the past. Recent discontinuation of PPI correlates with symptom recurrence.",
+      "conclusion": "Clinical pattern most consistent with recurrent GERD due to medication discontinuation."
+    },
+    {
+      "step": "Apply clinical prediction rules",
+      "observation": "HEART score is 1 (0 for history, 0 for ECG, 0 for age, 1 for risk factors, 0 for troponin), placing patient in very low-risk category.",
+      "reasoning": "HEART score of 1 corresponds to a 0.9-1.7% risk of major adverse cardiac event. In combination with a non-concerning history and normal ECG, this suggests cardiac work-up can be safely deferred.",
+      "conclusion": "Clinical prediction tools support low cardiac risk assessment."
+    }
+  ],
+  "differential_diagnosis": [
+    {
+      "diagnosis": "Gastroesophageal reflux disease (GERD) exacerbation",
+      "likelihood": "High",
+      "supporting_evidence": [
+        "Burning substernal pain worsening with meals and recumbency",
+        "Relief with upright posture and antacids",
+        "Associated regurgitation, throat clearing, and hoarseness",
+        "History of similar symptoms responsive to PPI therapy",
+        "Recent lifestyle changes known to exacerbate GERD (stress, weight gain, irregular meals)",
+        "Recent discontinuation of effective PPI therapy"
+      ]
+    },
+    {
+      "diagnosis": "Non-cardiac chest pain related to anxiety",
+      "likelihood": "Medium",
+      "supporting_evidence": [
+        "Increased work stress reported",
+        "Symptoms worsening during stressful periods",
+        "No objective evidence of cardiac, pulmonary, or other organic pathology",
+        "Anxiety and GERD often coexist and exacerbate each other"
+      ]
+    },
+    {
+      "diagnosis": "Acute coronary syndrome",
+      "likelihood": "Low",
+      "supporting_evidence": [
+        "Chest pain in middle-aged adult with hypertension",
+        "Substernal location of discomfort"
+      ],
+      "contradicting_evidence": [
+        "No classic ACS features (radiation, diaphoresis, exertional component)",
+        "Normal ECG without ischemic changes",
+        "Low HEART score (1)",
+        "Few cardiovascular risk factors",
+        "Clear alternative diagnosis (GERD)"
+      ]
+    },
+    {
+      "diagnosis": "Musculoskeletal chest pain",
+      "likelihood": "Low",
+      "supporting_evidence": [
+        "Chest discomfort may have positional component"
+      ],
+      "contradicting_evidence": [
+        "No chest wall tenderness",
+        "No history of trauma or unusual physical activity",
+        "Character of pain (burning) not typical for musculoskeletal causes",
+        "Clear relationship to meals and acid reflux"
+      ]
+    }
+  ],
+  "recommendations": [
+    "Resume proton pump inhibitor therapy (e.g., omeprazole 40 mg daily or equivalent for 4-8 weeks, then consider step-down to maintenance dose)",
+    "Lifestyle modifications: weight loss, avoid late meals, avoid trigger foods, elevate head of bed, stress management",
+    "Antacids or H2 blockers as needed for breakthrough symptoms",
+    "Stress management techniques, consideration of referral for stress management if significant contributor",
+    "Follow-up in 4-6 weeks to reassess symptoms and medication effectiveness",
+    "Return for evaluation if symptoms change in character, become more severe, or develop new concerning features (e.g., dysphagia, weight loss, vomiting, melena)",
+    "Consider GI referral if symptoms persist despite 8 weeks of optimized therapy"
+  ],
+  "conclusion": "This 45-year-old patient presents with recurrent symptoms consistent with gastroesophageal reflux disease (GERD) exacerbation, likely precipitated by recent PPI discontinuation and lifestyle changes including increased stress and weight gain. The clinical characteristics and low HEART score indicate low risk for acute coronary syndrome. Management should focus on resuming appropriate acid suppression therapy, lifestyle modifications, and stress management techniques.",
+  "confidence": 0.90
+} 

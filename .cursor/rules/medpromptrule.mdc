@@ -1,0 +1,368 @@
+---
+description: This CursorRule enhances the development workflow for implementing  a Clinical Reasoning Learning system based on Karpathy's system prompt  learning paradigm using Python and the Agno agent framework.
+globs: 
+---
+// CursorRule for Clinical Reasoning Learning System with Python and Agno
+
+/**
+ * This CursorRule enhances the development workflow for implementing
+ * a Clinical Reasoning Learning system based on Karpathy's system prompt
+ * learning paradigm using Python and the Agno agent framework.
+ * 
+ * It provides:
+ * 1. Automated organization of reasoning patterns
+ * 2. Validation of clinical reasoning structure
+ * 3. Assistance with medical terminology and citations
+ * 4. Integration of new reasoning patterns into the system
+ */
+
+{
+  "name": "Clinical Reasoning Learning Assistant",
+  "description": "Assists in developing and maintaining a system prompt learning framework for medical AI applications",
+  
+  // File structure organization
+  "filePatterns": {
+    "reasoningPatterns": "src/patterns/*.json",
+    "clinicalCases": "src/cases/*.json",
+    "evaluationMetrics": "src/evaluation/*.py",
+    "agnoAgents": "src/agents/*.py",
+    "agnoTools": "src/tools/*.py"
+  },
+  
+  // Pattern validation and structure enforcement
+  "reasoningPatternSchema": {
+    "required": ["id", "trigger", "strategy", "evidenceBase", "cautions", "example"],
+    "properties": {
+      "id": {"type": "string", "pattern": "^CRP-\\d{3}$"},
+      "trigger": {"type": "string", "minLength": 10},
+      "strategy": {"type": "array", "items": {"type": "string"}},
+      "evidenceBase": {"type": "array", "items": {"type": "object"}},
+      "cautions": {"type": "array", "items": {"type": "string"}},
+      "example": {"type": "object"}
+    }
+  },
+  
+  // Templates for Python with Agno framework
+  "templates": {
+    "newReasoningPattern": {
+      "path": "src/patterns/${id}.json",
+      "content": `{
+  "id": "${id}",
+  "trigger": "${trigger}",
+  "strategy": [
+    ${strategy.map(step => `"${step}"`).join(',\n    ')}
+  ],
+  "evidenceBase": [
+    ${evidenceBase.map(ref => `{
+      "source": "${ref.source}",
+      "citation": "${ref.citation}",
+      "relevance": "${ref.relevance}"
+    }`).join(',\n    ')}
+  ],
+  "cautions": [
+    ${cautions.map(caution => `"${caution}"`).join(',\n    ')}
+  ],
+  "example": {
+    "presentation": "${example.presentation}",
+    "application": "${example.application}",
+    "outcome": "${example.outcome}"
+  },
+  "dateAdded": "${new Date().toISOString()}",
+  "lastUpdated": "${new Date().toISOString()}"
+}`
+    },
+    
+    "agnoAgent": {
+      "path": "src/agents/${name}_agent.py",
+      "content": `
+from agno import Agent, Tool
+from agno.tools import BaseTool
+import json
+from typing import Dict, List, Optional, Any
+
+class ${name}Agent(Agent):
+    """
+    ${description}
+    
+    This agent implements a Clinical Reasoning Learning pattern
+    based on Karpathy's system prompt learning concept.
+    """
+    
+    def __init__(self):
+        super().__init__()
+        self.reasoning_library = self._load_reasoning_library()
+        self.register_tools([
+            # Register tools this agent can use
+            ${tools.map(tool => `self.${tool}_tool()`).join(',\n            ')}
+        ])
+        
+    def _load_reasoning_library(self) -> Dict[str, Any]:
+        """Load the clinical reasoning pattern library."""
+        patterns = {}
+        # Load patterns from storage
+        pattern_files = [f for f in os.listdir("src/patterns") if f.endswith(".json")]
+        for file in pattern_files:
+            with open(f"src/patterns/{file}", "r") as f:
+                pattern = json.load(f)
+                patterns[pattern["id"]] = pattern
+        return patterns
+    
+    def update_reasoning_library(self, pattern_id: str, updated_pattern: Dict[str, Any]):
+        """Update a reasoning pattern in the library."""
+        self.reasoning_library[pattern_id] = updated_pattern
+        with open(f"src/patterns/{pattern_id}.json", "w") as f:
+            json.dump(updated_pattern, f, indent=2)
+    
+    def add_reasoning_pattern(self, pattern: Dict[str, Any]):
+        """Add a new reasoning pattern to the library."""
+        pattern_id = pattern["id"]
+        self.reasoning_library[pattern_id] = pattern
+        with open(f"src/patterns/{pattern_id}.json", "w") as f:
+            json.dump(pattern, f, indent=2)
+    
+    def search_applicable_patterns(self, case_data: Dict[str, Any]) -> List[str]:
+        """Find patterns that might apply to the given case."""
+        applicable_patterns = []
+        for pattern_id, pattern in self.reasoning_library.items():
+            # Simple keyword matching for now - could be enhanced with embeddings
+            trigger_keywords = set(pattern["trigger"].lower().split())
+            case_text = " ".join([str(v) for v in case_data.values()]).lower()
+            
+            matches = sum(1 for keyword in trigger_keywords if keyword in case_text)
+            if matches / len(trigger_keywords) > 0.5:  # If more than half the keywords match
+                applicable_patterns.append(pattern_id)
+                
+        return applicable_patterns
+        
+    def apply_pattern(self, pattern_id: str, case_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply a specific reasoning pattern to a case."""
+        pattern = self.reasoning_library.get(pattern_id)
+        if not pattern:
+            return {"error": f"Pattern {pattern_id} not found"}
+            
+        result = {
+            "pattern_applied": pattern_id,
+            "reasoning_steps": [],
+            "conclusion": "",
+            "confidence": 0.0
+        }
+        
+        # Apply each step in the pattern
+        for step in pattern["strategy"]:
+            step_result = self._execute_reasoning_step(step, case_data)
+            result["reasoning_steps"].append(step_result)
+            
+        # Generate conclusion
+        result["conclusion"] = self._generate_conclusion(result["reasoning_steps"], pattern)
+        result["confidence"] = self._calculate_confidence(result["reasoning_steps"])
+        
+        return result
+    
+    def _execute_reasoning_step(self, step: str, case_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a single reasoning step."""
+        # In a real implementation, this would use LLM to reason about the step
+        # For now, just return a placeholder
+        return {
+            "step": step,
+            "observation": f"Observed relevant data for: {step}",
+            "reasoning": f"Reasoning about: {step}",
+            "conclusion": f"Step conclusion for: {step}"
+        }
+    
+    def _generate_conclusion(self, reasoning_steps: List[Dict[str, Any]], pattern: Dict[str, Any]) -> str:
+        """Generate an overall conclusion from reasoning steps."""
+        # In a real implementation, this would use LLM to synthesize conclusions
+        return f"Conclusion based on pattern {pattern['id']}"
+    
+    def _calculate_confidence(self, reasoning_steps: List[Dict[str, Any]]) -> float:
+        """Calculate confidence in the conclusion."""
+        # In a real implementation, this would use more sophisticated logic
+        return 0.8  # Placeholder
+      
+    # Define tools this agent can use
+    ${tools.map(tool => `
+    def ${tool}_tool(self) -> BaseTool:
+        """${tool} tool implementation."""
+        return Tool(
+            name="${tool}",
+            description="${toolDescriptions[tool]}",
+            function=self._${tool}_implementation
+        )
+        
+    def _${tool}_implementation(self, query: str) -> str:
+        """Implementation for ${tool} tool."""
+        # Implement tool functionality
+        return f"Result for {query} using ${tool} tool"
+    `).join('\n')}
+`
+    },
+    
+    "agnoTool": {
+      "path": "src/tools/${name}_tool.py",
+      "content": `
+from agno.tools import BaseTool
+from typing import Dict, Any, Optional
+
+class ${name}Tool(BaseTool):
+    """
+    ${description}
+    """
+    
+    name = "${name}"
+    description = "${description}"
+    
+    def _run(self, query: str, **kwargs) -> Any:
+        """Run the tool with the given query."""
+        # Tool implementation goes here
+        ${implementation}
+        
+        return result
+`
+    },
+    
+    "patternIntegration": {
+      "path": "src/integration/pattern_handler.py",
+      "snippet": `
+# Integration for pattern: ${id}
+def handle_${id.replace('CRP-', 'pattern_').lower()}(case_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Handler for Clinical Reasoning Pattern ${id}
+    
+    Args:
+        case_data: Dictionary containing the case information
+        
+    Returns:
+        Dictionary with reasoning results
+    """
+    # Check if this pattern applies
+    if not matches_trigger(case_data, get_pattern('${id}')["trigger"]):
+        return None
+    
+    # Apply the strategy steps
+    reasoning_steps = []
+    for step in get_pattern('${id}')["strategy"]:
+        step_result = execute_reasoning_step(case_data, step)
+        reasoning_steps.append(step_result)
+        
+        # Optional early termination if step invalidates pattern
+        if step_result.get("invalidates_pattern", False):
+            return {
+                "pattern_id": '${id}',
+                "applicable": False,
+                "reasoning_steps": reasoning_steps,
+                "explanation": step_result.get("explanation", "Pattern invalidated")
+            }
+    
+    # Check cautions
+    applicable_cautions = evaluate_cautions(case_data, get_pattern('${id}')["cautions"])
+    
+    return {
+        "pattern_id": '${id}',
+        "applicable": True,
+        "reasoning_steps": reasoning_steps,
+        "cautions": applicable_cautions,
+        "recommendation": generate_recommendation(case_data, reasoning_steps)
+    }
+`
+    }
+  },
+  
+  // Custom commands for Python and Agno development workflow
+  "commands": {
+    "newPattern": {
+      "description": "Create a new clinical reasoning pattern",
+      "action": "createFromTemplate",
+      "template": "newReasoningPattern",
+      "promptForValues": ["id", "trigger", "strategy", "evidenceBase", "cautions", "example"]
+    },
+    
+    "newAgnoAgent": {
+      "description": "Create a new Agno agent",
+      "action": "createFromTemplate",
+      "template": "agnoAgent",
+      "promptForValues": ["name", "description", "tools", "toolDescriptions"]
+    },
+    
+    "newAgnoTool": {
+      "description": "Create a new Agno tool",
+      "action": "createFromTemplate",
+      "template": "agnoTool",
+      "promptForValues": ["name", "description", "implementation"]
+    },
+    
+    "validatePatterns": {
+      "description": "Validate all clinical reasoning patterns against schema",
+      "action": "executeScript",
+      "script": "scripts/validate_patterns.py"
+    },
+    
+    "analyzeCase": {
+      "description": "Apply clinical reasoning patterns to a case",
+      "action": "executeScript",
+      "script": "scripts/analyze_case.py",
+      "args": ["--case", "${input:caseId}"]
+    },
+    
+    "exportPatternLibrary": {
+      "description": "Export entire clinical reasoning pattern library",
+      "action": "executeScript",
+      "script": "scripts/export_library.py",
+      "args": ["--format", "${input:format}"]
+    },
+    
+    "runAgno": {
+      "description": "Run the Agno agent with specified inputs",
+      "action": "executeScript",
+      "script": "scripts/run_agent.py",
+      "args": ["--agent", "${input:agentName}", "--input", "${input:inputFile}"]
+    }
+  },
+  
+  // Auto-suggestions for medical terminology
+  "suggestions": {
+    "medicalTerminology": {
+      "patterns": ["src/**/*.{ts,json,md}"],
+      "dictionary": "resources/medical_dictionary.json",
+      "threshold": 0.7
+    }
+  },
+  
+  // Integration with medical literature databases
+  "externalIntegrations": {
+    "pubmedSearch": {
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+      "paramTemplate": "?db=pubmed&term=${query}&retmode=json",
+      "resultPath": "esearchresult.idlist"
+    },
+    
+    "guidelineCheck": {
+      "endpoints": [
+        "https://api.guidelines.gov/v1/guidelines/search?term=${term}",
+        "https://www.nice.org.uk/api/guidelines?q=${term}"
+      ]
+    }
+  },
+  
+  // Analysis and metrics for the reasoning system
+  "metrics": {
+    "patternUsage": {
+      "script": "src/metrics/pattern_usage.py",
+      "schedule": "daily"
+    },
+    
+    "diagnosticAccuracy": {
+      "script": "src/metrics/diagnostic_accuracy.py",
+      "schedule": "weekly"
+    },
+    
+    "patternEvolution": {
+      "script": "src/metrics/pattern_evolution.py",
+      "schedule": "monthly"
+    },
+    
+    "agnoPerformance": {
+      "script": "src/metrics/agno_performance.py",
+      "schedule": "daily"
+    }
+  }
+}
