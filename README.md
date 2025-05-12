@@ -1,99 +1,124 @@
-# MediReason: Clinical Reasoning Learning System
+# MediPrompt: Medical Reasoning with System Prompt Learning
 
-MediReason is an advanced clinical reasoning system built with Python and the Agno agent framework. It's designed to not only answer medical queries but also document and improve its own reasoning processes, implementing Karpathy's concept of "system prompt learning" - capturing explicit problem-solving strategies rather than relying solely on parameter updates.
+MediPrompt is an advanced medical reasoning application built with Streamlit that implements Andrej Karpathy's concept of "system prompt learning". It integrates multiple specialized agents to provide medical reasoning, literature search, and continuous learning capabilities.
 
-## Core Capabilities
+## Key Features
 
-1. **Medical Knowledge**: Deep knowledge of medical literature, clinical guidelines, diagnostic criteria, and treatment protocols.
+- **Medical Reasoning Agent**: Analyzes clinical cases using structured reasoning patterns
+- **Literature Search Agent**: Searches medical literature from PubMed and ArXiv and synthesizes findings
+- **System Prompt Learning**: Continuously improves reasoning strategies by extracting explicit learning from successful reasoning cases
+- **Multi-agent Architecture**: Seamlessly integrates multiple specialized agents
+- **Interactive UI**: Clean Streamlit interface with chat, system prompt visualization, and settings
 
-2. **Clinical Reasoning**: Analyzes patient cases step-by-step, considers differential diagnoses, and recommends appropriate workups and treatments.
+## System Prompt Learning
 
-3. **Learning System**: Maintains a structured "Clinical Reasoning Library" of strategies and heuristics that update based on interactions.
+This application implements the concept introduced by Andrej Karpathy about system prompt learning:
 
-## Agno Agent Framework Integration
+> "We're missing (at least one) major paradigm for LLM learning. Not sure what to call it, possibly it has a name - system prompt learning?
+>
+> Pretraining is for knowledge.
+> Finetuning (SL/RL) is for habitual behavior.
+>
+> Both of these involve a change in parameters but a lot of human learning feels more like a change in system prompt."
 
-As an implementation using the Agno agent framework, MediReason has these specific capabilities:
+In MediPrompt, we implement this concept by:
 
-1. **Tool Integration**: Uses Agno's tool-calling capabilities to access medical databases, literature search, and clinical guidelines in real-time.
+1. Starting with base system prompts for different agents
+2. Analyzing clinical reasoning cases to extract explicit problem-solving strategies
+3. Adding these strategies to the system prompts to improve future reasoning
+4. Tracking and visualizing the growth of the system prompt library over time
 
-2. **State Persistence**: The Clinical Reasoning Library is maintained as a persistent knowledge store using Agno's state management.
+## Architecture
 
-3. **Multi-step Reasoning**: Leverages Agno's ReAct pattern to perform step-by-step reasoning with observation and reflection at each step.
+The application is built with the following components:
 
-4. **Python Implementation**: Backend implemented in Python, allowing for integration with medical data processing libraries and healthcare APIs.
-
-## Project Structure
-
-```
-MediReason/
-├── src/
-│   ├── agents/             # Agno agents for clinical reasoning
-│   ├── tools/              # Tools for accessing medical resources
-│   ├── patterns/           # Clinical reasoning pattern library
-│   ├── cases/              # Example medical cases
-│   ├── evaluation/         # Evaluation metrics and validation
-│   └── integration/        # Integration with external systems
-├── scripts/                # Utility scripts
-├── resources/              # Medical terminology and reference data
-└── tests/                  # Test suite
-```
+- **Streamlit App**: Main user interface and application logic
+- **LLM Integration**: Uses OpenAI's models for reasoning and analysis
+- **Agents**:
+  - MediReason: Clinical reasoning and diagnosis
+  - LiteratureSearch: Medical literature search and synthesis
+  - SystemPromptLearning: Extracts learning from clinical cases
+- **System Prompt Library**: Stores and manages evolving system prompts
+- **External Tools**: Integration with PubMed and ArXiv APIs
 
 ## Installation
 
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/eduardofarina/medireason.git
-cd medireason
+git clone https://github.com/yourusername/mediprompt.git
+cd mediprompt
+```
 
-# Install dependencies
+2. Install dependencies:
+```bash
 pip install -r requirements.txt
+```
+
+3. Set up your OpenAI API key:
+```bash
+# On Windows
+set OPENAI_API_KEY=your_api_key_here
+
+# On Linux/MacOS
+export OPENAI_API_KEY=your_api_key_here
 ```
 
 ## Usage
 
-```python
-from src.agents.medireason_agent import MediReasonAgent
-
-# Initialize the agent
-agent = MediReasonAgent()
-
-# Process a clinical case
-case_data = {
-    "presenting_symptoms": "Fever, cough, shortness of breath for 3 days",
-    "patient_demographics": "65-year-old male with history of COPD",
-    "vital_signs": "Temperature 38.5°C, HR 110, BP 135/85, RR 22, O2 sat 92% on RA",
-    "physical_exam": "Decreased breath sounds in right lower lobe, no wheezing",
-    "past_medical_history": "COPD, hypertension, type 2 diabetes"
-}
-
-# Get the clinical reasoning
-result = agent.analyze_case(case_data)
-print(result.conclusion)
+1. Start the Streamlit app:
+```bash
+streamlit run src/app.py
 ```
 
-## Clinical Reasoning Library
+2. Use the chat interface to:
+   - Enter medical cases for analysis
+   - Ask general medical questions
+   - View literature search results
 
-The Clinical Reasoning Library uses the following format:
+3. Explore the System Prompt Learning tab to see how the system improves over time
+
+4. Configure settings in the Settings tab
+
+## Example Queries
+
+- **Clinical Case Analysis**: "A 67-year-old male with hypertension presents with sudden onset of crushing chest pain radiating to the left arm, diaphoresis, and shortness of breath. Vital signs show BP 160/95, HR 110, RR 22, O2 sat 94% on room air. ECG shows ST elevation in leads V2-V5."
+
+- **Literature Search**: "What is the current evidence for SGLT2 inhibitors in heart failure with preserved ejection fraction?"
+
+- **General Medical Question**: "What are the main differences between type 1 and type 2 diabetes in terms of pathophysiology and treatment?"
+
+## Project Structure
 
 ```
-CLINICAL REASONING PATTERN #[number]
-TRIGGER: [When to apply this pattern]
-STRATEGY: [Step-by-step approach]
-EVIDENCE BASE: [Supporting medical literature/guidelines]
-CAUTIONS: [When this approach might be misleading]
-EXAMPLE APPLICATION: [Brief case example]
+mediprompt/
+├── src/
+│   ├── app.py                  # Main Streamlit application
+│   ├── prompts.py              # System prompt library implementation
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   └── medireason_agent.py # Medical reasoning agent
+│   ├── patterns/               # Clinical reasoning patterns
+│   │   ├── CRP-001.json
+│   │   └── CRP-002.json
+│   ├── system_prompts/         # System prompts for learning
+│   │   ├── med-reasoning-base.json
+│   │   ├── literature-search-base.json
+│   │   └── system-prompt-learning.json
+│   └── tools/                  # External tools and integrations
+├── requirements.txt            # Dependencies
+└── README.md                   # Documentation
 ```
 
 ## Contributing
 
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) for details on how to submit patterns, improvements, or bug fixes.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
-- Inspired by Andrej Karpathy's system prompt learning concept
-- Built with the Agno agent framework
-- Special thanks to the medical experts who contributed to the reasoning patterns 
+- Andrej Karpathy for the system prompt learning concept
+- OpenAI for providing the LLM capabilities
+- Streamlit for the UI framework 
