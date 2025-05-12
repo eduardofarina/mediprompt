@@ -10,7 +10,7 @@ from agno.tools.pubmed import PubmedTools
 from agno.tools.arxiv import ArxivTools
 
 # Import system prompt library
-from prompts import SystemPromptLibrary, initialize_prompt_library
+from prompts import SystemPromptLibrary, initialize_prompt_library, SystemPromptLearningAgent
 from agents.medireason_agent import MediReasonAgent
 
 # Initialize OpenAI client
@@ -26,37 +26,40 @@ arxiv_tools = ArxivTools()
 # Initialize the MediReason agent
 medireason_agent = MediReasonAgent()
 
-# Add this utility at the top (after imports)
-REQUIRED_FIELDS = [
-    "presenting_symptoms",
-    "patient_demographics",
-    "vital_signs",
-    "physical_exam",
-    "past_medical_history",
-    "medications",
-    "allergies",
-    "social_history",
-    "family_history",
-    "lab_results"
-]
+# Initialize the learning agent
+learning_agent = SystemPromptLearningAgent(prompt_library)
 
-def get_missing_fields(case_data):
-    return [field for field in REQUIRED_FIELDS if not case_data.get(field)]
+# Add a mapping function to interpret agent's ask_user
+FIELD_KEYWORDS = {
+    "age": "patient_demographics",
+    "sex": "patient_demographics",
+    "demographic": "patient_demographics",
+    "vital": "vital_signs",
+    "symptom": "presenting_symptoms",
+    "exam": "physical_exam",
+    "history": "past_medical_history",
+    "medication": "medications",
+    "allerg": "allergies",
+    "social": "social_history",
+    "family": "family_history",
+    "lab": "lab_results",
+}
 
-def get_field_prompt(field):
-    prompts = {
-        "presenting_symptoms": "What are the presenting symptoms?",
-        "patient_demographics": "Can you provide the patient's demographics (age, sex, etc.)?",
-        "vital_signs": "What are the patient's vital signs?",
-        "physical_exam": "What are the relevant physical exam findings?",
-        "past_medical_history": "Any relevant past medical history?",
-        "medications": "What medications is the patient taking?",
-        "allergies": "Any known allergies?",
-        "social_history": "Any relevant social history (smoking, alcohol, occupation, etc.)?",
-        "family_history": "Any relevant family history?",
-        "lab_results": "Any available lab results?"
-    }
-    return prompts.get(field, f"Please provide information for: {field}")
+def is_info_already_provided(ask_user, case_data):
+    ask = ask_user.lower() if ask_user else ""
+    for key, field in FIELD_KEYWORDS.items():
+        if key in ask and case_data.get(field):
+            return True
+    return False
+
+def update_case_data_from_user_input(user_input, last_ask_user, case_data):
+    # Try to map the last question to a field and update it
+    for key, field in FIELD_KEYWORDS.items():
+        if last_ask_user and key in last_ask_user.lower():
+            case_data[field] = user_input
+            return
+    # If no mapping, just append to a generic notes field
+    case_data["notes"] = case_data.get("notes", "") + "\n" + user_input
 
 def get_llm_response(messages, model="gpt-4o", temperature=0.7):
     """Get a response from the specified LLM model"""
@@ -341,7 +344,6 @@ def process_medical_case(case_text: str, incorporate_system_prompt_learning=True
     
     # If system prompt learning is enabled, use it to improve prompts
     if incorporate_system_prompt_learning:
-        learning_agent = SystemPromptLearningAgent(prompt_library)
         learning_result = learning_agent.analyze_reasoning(case_data, medireason_result)
         
         # If a new strategy was extracted, add it to the medical reasoning prompt
@@ -495,104 +497,107 @@ def main():
     # Initialize session state
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-    if "current_case" not in st.session_state:
-        st.session_state.current_case = None
-    if "current_results" not in st.session_state:
-        st.session_state.current_results = None
     if "case_data" not in st.session_state:
-        st.session_state.case_data = {field: "" for field in REQUIRED_FIELDS}
-    if "intake_in_progress" not in st.session_state:
-        st.session_state.intake_in_progress = False
-    if "current_field" not in st.session_state:
-        st.session_state.current_field = None
+        st.session_state.case_data = {}
+    if "last_ask_user" not in st.session_state:
+        st.session_state.last_ask_user = None
+    if "awaiting_agent" not in st.session_state:
+        st.session_state.awaiting_agent = False
+
+    # Initialize session state for learning toggle and log
+    if "enable_learning" not in st.session_state:
+        st.session_state.enable_learning = True
+    if "system_prompt_learning_log" not in st.session_state:
+        st.session_state.system_prompt_learning_log = []
 
     tabs = st.tabs(["Chat Interface", "System Prompt Learning", "Settings"])
     
     with tabs[0]:
+        # Add New Case button
+        if st.button("🔄 Start New Case"):
+            st.session_state.case_data = {}
+            st.session_state.chat_history = [{"role": "assistant", "content": "Starting a new case analysis. Please describe the case or ask a question."}]
+            st.session_state.last_ask_user = None
+            st.session_state.awaiting_agent = False
+            st.rerun()
+
+        # Display chat history
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
         
-        user_input = st.chat_input("Enter a medical case or question...")
+        user_input = st.chat_input("Enter a medical case, answer a question, or ask...")
         
         if user_input:
-            # Intake in progress: expecting answer to a specific field
-            if st.session_state.intake_in_progress and st.session_state.current_field:
-                field = st.session_state.current_field
-                st.session_state.case_data[field] = user_input
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                st.session_state.current_field = None
+            # If we are waiting for a specific answer, update case_data
+            if st.session_state.last_ask_user:
+                update_case_data_from_user_input(user_input, st.session_state.last_ask_user, st.session_state.case_data)
             else:
-                # New case or question
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                # Use LLM to determine if it's a case or question
-                prompt = """
-                Determine if the following text describes a medical case or is a general question. Respond with just 'CASE' or 'QUESTION'.
-                """
-                messages = [
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": user_input}
-                ]
-                input_type = get_llm_response(messages).strip().upper()
-                if input_type == "CASE":
-                    # Try to extract as much as possible from the initial input
-                    extract_prompt = """
-                    Extract the following fields from the text if present. Return as JSON. If a field is missing, use an empty string.
-                    Fields: presenting_symptoms, patient_demographics, vital_signs, physical_exam, past_medical_history, medications, allergies, social_history, family_history, lab_results
-                    """
-                    extract_messages = [
-                        {"role": "system", "content": extract_prompt},
-                        {"role": "user", "content": user_input}
-                    ]
-                    response = get_llm_response(extract_messages)
-                    try:
-                        start_idx = response.find("{")
-                        end_idx = response.rfind("}") + 1
-                        if start_idx >= 0 and end_idx > start_idx:
-                            json_str = response[start_idx:end_idx]
-                            extracted = json.loads(json_str)
-                            for k, v in extracted.items():
-                                if k in st.session_state.case_data:
-                                    st.session_state.case_data[k] = v
-                    except Exception:
-                        pass
-                    st.session_state.intake_in_progress = True
+                # New interaction, potentially start of a new case if history is empty
+                if not st.session_state.chat_history: # Check if it's truly a new start
+                     st.session_state.case_data = {}
+                st.session_state.case_data["initial_input"] = st.session_state.case_data.get("initial_input", "") + "\n" + user_input
             
-            # Check for missing fields
-            missing = get_missing_fields(st.session_state.case_data)
-            if missing:
-                next_field = missing[0]
-                st.session_state.current_field = next_field
-                st.session_state.intake_in_progress = True
-                prompt = get_field_prompt(next_field)
-                st.session_state.chat_history.append({"role": "assistant", "content": prompt})
-                st.rerun()
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            st.session_state.awaiting_agent = True
+            st.rerun()
+        
+        # Agent turn: only run after user input
+        if st.session_state.awaiting_agent:
+            st.session_state.awaiting_agent = False # Reset flag
+
+            # Always pass full case_data to the agent
+            result = medireason_agent.analyze_case(st.session_state.case_data)
+            
+            # Compose concise output
+            differentials = result.get("differential_diagnosis", [])
+            recommendations = result.get("recommendations", [])
+            ask_user = result.get("ask_user", None)
+            
+            # Format output
+            output = ""
+            if differentials:
+                output += "**Differential Diagnosis:**\n"
+                for d in differentials:
+                    output += f"- {d.get('diagnosis')}: {d.get('reasoning', d.get('likelihood', ''))}\n"
+            if recommendations:
+                output += "\n**Next Steps / Recommendations:**\n"
+                for r in recommendations:
+                    output += f"- {r}\n"
+            
+            # Check if agent asks a question and if info is needed
+            needs_more_info = ask_user and not is_info_already_provided(ask_user, st.session_state.case_data)
+            
+            if needs_more_info:
+                output += f"\n**Question:** {ask_user}"
+                st.session_state.last_ask_user = ask_user
             else:
-                # All fields filled, run reasoning
-                st.session_state.intake_in_progress = False
-                st.session_state.current_field = None
-                st.session_state.current_results = process_medical_case("", incorporate_system_prompt_learning=True)
-                medireason_formatted = format_medireason_result(st.session_state.current_results["medireason_result"])
-                literature_formatted = format_literature_search_result(st.session_state.current_results["literature_search"])
-                # Compose concise output
-                response = f"{medireason_formatted}\n\n{literature_formatted}"
-                # If agent wants to keep the conversation going, prompt user
-                ask_user = st.session_state.current_results["medireason_result"].get("ask_user")
-                if ask_user:
-                    st.session_state.intake_in_progress = True
-                    st.session_state.current_field = None
-                    st.session_state.chat_history.append({"role": "assistant", "content": ask_user})
-                    st.rerun()
-                else:
-                    if st.session_state.current_results["system_prompt_learning"]:
-                        learning_formatted = display_system_prompt_learning(st.session_state.current_results["system_prompt_learning"])
-                        response += f"\n\n{learning_formatted}"
-                    st.session_state.chat_history.append({"role": "assistant", "content": response})
-                    # Reset for next case
-                    st.session_state.case_data = {field: "" for field in REQUIRED_FIELDS}
-                    st.session_state.intake_in_progress = False
-                    st.session_state.current_field = None
-                    st.rerun()
+                # Reasoning seems complete for now, attempt system prompt learning
+                st.session_state.last_ask_user = None
+                if st.session_state.enable_learning:
+                    try:
+                        learning_result = learning_agent.analyze_reasoning(st.session_state.case_data, result)
+                        if "new_strategy" in learning_result and "error" not in learning_result:
+                            strategy = learning_result["new_strategy"]
+                            add_status = learning_agent.add_strategy_to_prompt("med-reasoning-base", strategy)
+                            
+                            # Log the learning event
+                            log_entry = {
+                                "timestamp": datetime.datetime.now().isoformat(),
+                                "case": json.dumps(st.session_state.case_data.get("initial_input", "N/A"))[:100] + "...",
+                                "strategy": strategy.get("description", "N/A"),
+                                "prompt_id": "med-reasoning-base",
+                                "status": add_status.get("status", "unknown")
+                            }
+                            st.session_state.system_prompt_learning_log.append(log_entry)
+                            
+                            # Optionally add a note about learning to the chat
+                            output += f"\n\n*(Learned new strategy: {strategy.get('description', 'N/A')})*"
+                    except Exception as e:
+                        st.warning(f"System prompt learning failed: {str(e)}")
+
+            st.session_state.chat_history.append({"role": "assistant", "content": output})
+            st.rerun()
     
     # Tab 2: System Prompt Learning
     with tabs[1]:
@@ -606,12 +611,14 @@ def main():
         # Show current system prompts
         with st.expander("Current System Prompts"):
             st.subheader("Medical Reasoning Prompt")
+            # Reload prompts in case they were updated
+            prompt_library.load_prompts() 
             med_reasoning_prompt = prompt_library.get_formatted_prompt("med-reasoning-base")
-            st.text_area("Medical Reasoning Prompt", med_reasoning_prompt, height=300)
+            st.text_area("Medical Reasoning Prompt", med_reasoning_prompt, height=300, key="med_reasoning_display")
             
             st.subheader("Literature Search Prompt")
             lit_search_prompt = prompt_library.get_formatted_prompt("literature-search-base")
-            st.text_area("Literature Search Prompt", lit_search_prompt, height=300)
+            st.text_area("Literature Search Prompt", lit_search_prompt, height=300, key="lit_search_display")
         
         # Show learning log
         st.subheader("Learning History")
@@ -629,11 +636,12 @@ def main():
             st.success("API key set successfully!")
         
         # System prompt learning toggle
-        enable_learning = st.toggle("Enable System Prompt Learning", value=True,
+        enable_learning = st.toggle("Enable System Prompt Learning", value=st.session_state.enable_learning,
                                   help="Turn on/off the system's ability to learn new reasoning strategies")
-        if enable_learning != st.session_state.get("enable_learning", True):
+        if enable_learning != st.session_state.enable_learning:
             st.session_state.enable_learning = enable_learning
             st.success(f"System prompt learning {'enabled' if enable_learning else 'disabled'}!")
+            st.rerun() # Rerun to reflect change immediately if needed
         
         # Model selection
         model = st.selectbox("LLM Model", ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"],

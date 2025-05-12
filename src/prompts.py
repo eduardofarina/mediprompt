@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Any
 import json
 import os
 import datetime
+from openai import OpenAI
 
 class SystemPromptLibrary:
     """
@@ -286,3 +287,69 @@ def initialize_prompt_library(library_path: str = "src/system_prompts"):
         library.add_prompt(SYSTEM_PROMPT_LEARNING_AGENT)
     
     return library 
+
+class SystemPromptLearningAgent:
+    def __init__(self, prompt_library):
+        self.prompt_library = prompt_library
+        self.system_prompt_id = "med-reasoning-base"
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    def analyze_reasoning(self, case_data: Dict[str, Any], reasoning_result: Dict[str, Any]) -> Dict[str, Any]:
+        # Format the case and reasoning for the LLM
+        case_str = json.dumps(case_data, indent=2)
+        reasoning_str = json.dumps(reasoning_result, indent=2)
+        prompt = (
+            "You are a clinical reasoning system learning to improve itself. "
+            "Given the following case and your own reasoning, extract a general, reusable problem-solving strategy "
+            "that could help in future cases. The strategy should be explicit, step-by-step, and not just a fact. "
+            "Format your answer as JSON with fields: description, when_to_use, how_to_apply, example."
+            "\n\nCASE:\n" + case_str +
+            "\n\nREASONING:\n" + reasoning_str +
+            "\n\nRespond only with the JSON."
+        )
+        messages = [
+            {"role": "system", "content": "You are a clinical reasoning system."},
+            {"role": "user", "content": prompt}
+        ]
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                temperature=0.3,
+            )
+            content = response.choices[0].message.content
+            start_idx = content.find("{")
+            end_idx = content.rfind("}") + 1
+            if start_idx >= 0 and end_idx > start_idx:
+                json_str = content[start_idx:end_idx]
+                strategy = json.loads(json_str)
+                strategy["extracted_at"] = datetime.datetime.now().isoformat()
+                return {"new_strategy": strategy}
+        except Exception as e:
+            return {"error": str(e)}
+        return {}
+
+    def add_strategy_to_prompt(self, prompt_id: str, strategy: Dict[str, Any]):
+        # Add the new strategy to the prompt JSON file
+        prompt_data = self.prompt_library.get_prompt(prompt_id)
+        if not prompt_data:
+            return {"status": "error", "message": "Prompt not found"}
+        if "reasoning_strategies" not in prompt_data:
+            prompt_data["reasoning_strategies"] = []
+        # Avoid duplicates
+        if not any(s["description"] == strategy["description"] for s in prompt_data["reasoning_strategies"]):
+            prompt_data["reasoning_strategies"].append(strategy)
+            prompt_data["last_updated"] = datetime.datetime.now().isoformat()
+            # Save to file
+            path = os.path.join(self.prompt_library.library_path, f"{prompt_id}.json")
+            with open(path, "w") as f:
+                json.dump(prompt_data, f, indent=2)
+            self.prompt_library.prompts[prompt_id] = prompt_data
+            return {"status": "success"}
+        return {"status": "duplicate"}
+
+__all__ = [
+    "SystemPromptLibrary",
+    "initialize_prompt_library",
+    "SystemPromptLearningAgent",
+] 
