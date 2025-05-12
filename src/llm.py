@@ -49,9 +49,16 @@ class LLMOrchestrator:
             orchestration = {"mode": "diagnosis", "agent_calls": ["diagnosis"], "thinking": f"LLM error: {str(e)}"}
             debug_log["llm_exception"] = str(e)
 
-        # Fallback: if agent_calls is empty but mode is diagnosis, call diagnosis agent
-        if (not orchestration.get("agent_calls")) and orchestration.get("mode") == "diagnosis":
-            orchestration["agent_calls"] = ["diagnosis"]
+        # Only keep agent calls that are actually registered
+        orchestration["agent_calls"] = [a for a in orchestration.get("agent_calls", []) if a in self.agents]
+        # Fallbacks for all supported modes
+        if (not orchestration.get("agent_calls")):
+            if orchestration.get("mode") in ["diagnosis"]:
+                orchestration["agent_calls"] = ["diagnosis"]
+            elif orchestration.get("mode") in ["management", "treatment"]:
+                orchestration["agent_calls"] = ["management"]
+            elif orchestration.get("mode") == "literature":
+                orchestration["agent_calls"] = ["literature"]
 
         debug_log["orchestration"] = orchestration
         agent_outputs = {}
@@ -60,6 +67,15 @@ class LLMOrchestrator:
             try:
                 if call == "diagnosis":
                     agent_outputs["diagnosis"] = self.agents["diagnosis"].analyze_case(case_data)
+                elif call == "management":
+                    # Use the most likely diagnosis from case_data or last diagnosis result
+                    diagnosis = case_data.get("diagnosis")
+                    if not diagnosis and "diagnosis" in agent_outputs:
+                        diffs = agent_outputs["diagnosis"].get("differential_diagnosis", [])
+                        if diffs:
+                            diagnosis = diffs[0].get("diagnosis")
+                    advice = self.agents["management"].get_management_advice(diagnosis, case_data)
+                    agent_outputs["management"] = advice
                 elif call == "literature":
                     query = conversation[-1]["content"] if conversation else ""
                     agent_outputs["literature"] = self.agents["literature"].search_literature(query)
@@ -137,6 +153,8 @@ class LLMOrchestrator:
             needs_more_info = ask_user and not is_info_already_provided(ask_user, case_data)
             if needs_more_info:
                 response += f"\n**Question:** {ask_user}"
+        if "management" in agent_outputs:
+            response += f"\n**Management/Advice:**\n{agent_outputs['management']}"
         if "treatment" in agent_outputs:
             response += f"\n**Treatment/Management:**\n{agent_outputs['treatment']}"
         if "followup" in agent_outputs:

@@ -14,6 +14,7 @@ from llm import LLMOrchestrator
 from prompts import SystemPromptLibrary, initialize_prompt_library, SystemPromptLearningAgent
 from agents.medireason_agent import MediReasonAgent
 from agents.literature_agent import LiteratureSearchAgent
+from agents.management_agent import ManagementAgent
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -31,9 +32,13 @@ medireason_agent = MediReasonAgent()
 # Initialize the learning agent
 learning_agent = SystemPromptLearningAgent(prompt_library)
 
+# Initialize the Management agent
+management_agent = ManagementAgent()
+
 # Initialize the orchestrator with all agents
 agents = {
     "diagnosis": medireason_agent,
+    "management": management_agent,
     "literature": LiteratureSearchAgent(prompt_library),
     # Add more agents as needed
 }
@@ -458,7 +463,7 @@ def main():
             st.rerun()
 
         # Display chat history
-        for interaction in st.session_state.history:
+        for idx, interaction in enumerate(st.session_state.history):
             if interaction.get("user_message"):
                 st.chat_message("user").write(interaction["user_message"])
             if interaction.get("assistant_message"):
@@ -467,6 +472,41 @@ def main():
                     if interaction.get("reasoning"):
                         with st.expander("Show agent reasoning / debug log"):
                             st.json(interaction["reasoning"])
+            # After the last assistant message, show 'Case Closed' button if not already closed
+            if idx == len(st.session_state.history) - 1 and interaction.get("assistant_message") and not interaction.get("case_closed"):
+                with st.container():
+                    st.markdown("---")
+                    st.subheader("Case Closed")
+                    user_comments = st.text_area("Comments or teaching points (optional)", key=f"comments_{idx}")
+                    if st.button("Close Case & Update System Prompt", key=f"close_case_{idx}"):
+                        # Mark case as closed
+                        st.session_state.history[idx]["case_closed"] = True
+                        st.session_state.history[idx]["user_comments"] = user_comments
+                        # Trigger system prompt learning
+                        case_data = st.session_state.case_data.copy()
+                        agent_reasoning = interaction.get("reasoning", {})
+                        # Call the learning agent with user comments
+                        learning_result = learning_agent.analyze_reasoning(case_data, agent_reasoning)
+                        # Attach user comments to learning result
+                        if learning_result:
+                            learning_result["user_comments"] = user_comments
+                        # Add to system prompt if new strategy
+                        if learning_result and "new_strategy" in learning_result and "error" not in learning_result:
+                            strategy = learning_result["new_strategy"]
+                            add_status = learning_agent.add_strategy_to_prompt("med-reasoning-base", strategy)
+                            learning_log = {
+                                "timestamp": datetime.datetime.now().isoformat(),
+                                "case": json.dumps(case_data.get("initial_input", "N/A"))[:100] + "...",
+                                "strategy": strategy.get("description", "N/A"),
+                                "prompt_id": "med-reasoning-base",
+                                "status": add_status.get("status", "unknown"),
+                                "user_comments": user_comments
+                            }
+                            st.session_state.system_prompt_learning_log.append(learning_log)
+                            st.success(f"System prompt updated with new strategy: {strategy.get('description', 'N/A')}")
+                        else:
+                            st.info("No new strategy extracted from this case, but case was closed.")
+                        st.rerun()
 
         # Handle user input
         user_input = st.chat_input("Enter a medical case, answer a question, or ask...")

@@ -66,6 +66,47 @@
       ],
       "example": "A patient presents with a cough. The clinician considers upper respiratory tract infection, GERD, and asthma. The clinician asks about recent upper respiratory symptoms, heartburn, and symptom triggers. The patient reports cough worse after meals and at night, leading to a higher suspicion of GERD.",
       "extracted_at": "2025-05-12T16:56:27.373154"
+    },
+    {
+      "description": "A structured approach to diagnosing respiratory conditions with overlapping symptoms.",
+      "when_to_use": "When a patient presents with respiratory symptoms such as cough, fever, chest pain, and abnormal vital signs, and there is imaging evidence of lung involvement.",
+      "how_to_apply": [
+        "1. Gather all relevant clinical data, including symptoms, vital signs, and imaging results.",
+        "2. Identify key findings that point towards specific diagnoses (e.g., consolidation on CXR for pneumonia).",
+        "3. Generate a differential diagnosis list based on the most common and plausible conditions given the clinical presentation.",
+        "4. Use supporting laboratory data (e.g., elevated inflammatory markers) to prioritize the differential diagnoses.",
+        "5. Consider less likely but possible conditions that could explain the symptoms, especially if typical findings are absent or atypical.",
+        "6. Recommend further diagnostic tests to confirm the most likely diagnosis or rule out other possibilities.",
+        "7. Ask targeted questions to gather additional information that could influence the diagnosis (e.g., recent travel, exposure history)."
+      ],
+      "example": {
+        "case": "A 50-year-old patient with cough, fever, chest pain, tachypnea, and tachycardia, with a chest X-ray showing left lung consolidation.",
+        "application": [
+          "1. Gather data: Symptoms (cough, fever, chest pain), vital signs (tachypnea, tachycardia), imaging (consolidation on CXR).",
+          "2. Identify key findings: Consolidation suggests pneumonia.",
+          "3. Generate differential: Pneumonia, pulmonary embolism, lung abscess.",
+          "4. Use lab data: Elevated CRP and WBC support infectious process, prioritizing pneumonia.",
+          "5. Consider less likely conditions: Pulmonary embolism with infarct, lung abscess.",
+          "6. Recommend tests: Sputum culture for pneumonia, CT angiogram if PE is a concern.",
+          "7. Ask about recent travel or exposure to sick contacts to refine diagnosis."
+        ]
+      },
+      "extracted_at": "2025-05-12T20:12:44.324939"
+    },
+    {
+      "description": "A strategy for managing suspected viral infections when diagnostic tests are unavailable.",
+      "when_to_use": "Use this strategy when a patient presents with symptoms suggestive of a viral infection, diagnostic tests are not available, and there is a need to manage symptoms and prevent complications.",
+      "how_to_apply": [
+        "1. **Symptomatic Treatment:** Focus on alleviating symptoms using appropriate medications and supportive care.",
+        "   - Administer medications like acetaminophen or ibuprofen for fever and pain, ensuring correct dosing.",
+        "   - Encourage hydration and rest to support recovery.",
+        "2. **Monitoring:** Keep an eye on the patient for any signs of complications that may require further medical evaluation.",
+        "3. **Infection Control:** Implement measures to prevent the spread of infection, such as good hygiene practices and isolation if necessary.",
+        "4. **Consideration for Antiviral Treatment:** If a specific viral infection is suspected and treatment is time-sensitive, consider discussing antiviral options with a healthcare provider.",
+        "5. **Vaccination:** After recovery, discuss vaccination options to prevent future infections."
+      ],
+      "example": "In a case where a child presents with fever, cough, and runny nose, and many peers have similar symptoms, manage the case by providing symptomatic treatment, monitoring for complications, enforcing infection control measures, considering antiviral treatment if influenza is suspected, and discussing vaccination post-recovery.",
+      "extracted_at": "2025-05-12T20:41:14.247912"
     }
   ],
   "examples": [
@@ -81,5 +122,5 @@
     "Cognitive biases like anchoring and premature closure can lead to diagnostic errors"
   ],
   "date_added": "2023-05-15T12:00:00.000Z",
-  "last_updated": "2025-05-12T16:56:27.373154"
+  "last_updated": "2025-05-12T20:41:14.247912"
 }
