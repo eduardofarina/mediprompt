@@ -45,7 +45,7 @@ The application is built with the following components:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/mediprompt.git
+git clone https://github.com/eduardofarina/medireason.git
 cd mediprompt
 ```
 
